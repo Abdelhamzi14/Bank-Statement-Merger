@@ -40,144 +40,174 @@ export default function SummaryAndExport({ files, transactions }: Props) {
   });
 
   const exportToExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'MergeXpress';
-    workbook.lastModifiedBy = 'MergeXpress';
-    workbook.created = new Date();
+    try {
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'BankStatementMerger';
+      workbook.lastModifiedBy = 'BankStatementMerger';
+      workbook.created = new Date();
 
-    const headerStyle: Partial<ExcelJS.Style> = {
-      font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 },
-      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }, // Dark Blue (Indigo-900ish)
-      alignment: { horizontal: 'center', vertical: 'middle' },
-      border: {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      }
-    };
-
-    // 1. Dashboard Summary
-    const wsSummary = workbook.addWorksheet('Dashboard Summary', {
-      views: [{ state: 'frozen', ySplit: 0, xSplit: 0 }]
-    });
-
-    wsSummary.addRow(['Bank Reconciliation Consolidated Report']).font = { bold: true, size: 14, italic: true };
-    wsSummary.addRow([`Report Generated: ${new Date().toLocaleString()}`]).font = { italic: true, size: 10 };
-    wsSummary.addRow([]);
-
-    const fileHeader = wsSummary.addRow(['FILE ACCOUNT SUMMARY']);
-    fileHeader.font = { bold: true, size: 12 };
-    const fileSubHeader = wsSummary.addRow(['File Name', 'Transactions Count', 'Net Amount']);
-    fileSubHeader.eachCell((cell) => cell.style = headerStyle as ExcelJS.Style);
-
-    accountStats.forEach(s => {
-      const row = wsSummary.addRow([s.name, s.count, s.total]);
-      row.getCell(3).numFmt = '#,##0.00';
-    });
-
-    wsSummary.addRow([]);
-    const catHeader = wsSummary.addRow(['CATEGORY CONSOLIDATION']);
-    catHeader.font = { bold: true, size: 12 };
-    const catSubHeader = wsSummary.addRow(['Category Name', 'Line Items', 'Total Vol.']);
-    catSubHeader.eachCell((cell) => cell.style = headerStyle as ExcelJS.Style);
-
-    stats.forEach(s => {
-      const row = wsSummary.addRow([s.name, s.count, s.total]);
-      row.getCell(3).numFmt = '#,##0.00';
-    });
-
-    wsSummary.addRow([]);
-    const totalRow = wsSummary.addRow(['TOTAL CONSOLIDATED POSITION', '', transactions.reduce((s, t) => s + t.amount, 0)]);
-    totalRow.font = { bold: true };
-    totalRow.getCell(3).numFmt = '#,##0.00';
-
-    wsSummary.getColumn(1).width = 45;
-    wsSummary.getColumn(2).width = 20;
-    wsSummary.getColumn(3).width = 20;
-
-    // 2. Category Tabs
-    CATEGORIES.forEach(category => {
-      const categoryItems = transactions.filter(t => t.category === category);
-      if (categoryItems.length > 0) {
-        const ws = workbook.addWorksheet(category.substring(0, 31), {
-          views: [{ state: 'frozen', ySplit: 1 }]
-        });
-
-        const isSpecialTab = ['Chargebacks', 'Merchant Fees', 'Bank Transfer', 'Miscellaneous'].includes(category);
-
-        const columns = [
-          { header: 'Date', key: 'date', width: 15 },
-          { header: 'Description', key: 'description', width: 50 },
-          { header: 'Account#', key: 'accountNumber', width: 20 },
-          { header: 'Amount', key: 'amount', width: 15 },
-        ];
-
-        if (isSpecialTab) {
-          columns.push(
-            { header: 'NetSuite Account Number - Debit', key: 'nsDebit', width: 30 },
-            { header: 'Debit', key: 'debit', width: 15 },
-            { header: 'Credit', key: 'credit', width: 15 },
-            { header: 'NetSuite Account Number - Credit', key: 'nsCredit', width: 30 },
-            { header: 'Debit', key: 'swappedDebit', width: 15 },
-            { header: 'Credit', key: 'swappedCredit', width: 15 },
-            { header: 'Source File', key: 'sourceFile', width: 30 }
-          );
-        } else {
-          columns.push(
-            { header: 'Debit', key: 'debit', width: 15 },
-            { header: 'Credit', key: 'credit', width: 15 },
-            { header: 'Source File', key: 'sourceFile', width: 30 }
-          );
+      const headerStyle: Partial<ExcelJS.Style> = {
+        font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 },
+        fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } },
+        alignment: { horizontal: 'center', vertical: 'middle' },
+        border: {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
         }
+      };
 
-        ws.columns = columns;
+      // 1. Dashboard Summary
+      const wsSummary = workbook.addWorksheet('Dashboard Summary');
 
-        // Style header row
-        const rowHeader = ws.getRow(1);
-        rowHeader.height = 25;
-        rowHeader.eachCell((cell) => {
-          cell.style = headerStyle as ExcelJS.Style;
-        });
+      wsSummary.addRow(['Bank Statement Merger Consolidated Report']).font = { bold: true, size: 14 };
+      wsSummary.addRow([`Report Generated: ${new Date().toLocaleString()}`]).font = { italic: true, size: 10 };
+      wsSummary.addRow([]);
 
-        categoryItems.forEach(item => {
-          const blankIfZero = (val: number | null) => (val === 0 || val === null) ? null : val;
+      const fileHeaderLine = wsSummary.addRow(['FILE ACCOUNT SUMMARY']);
+      fileHeaderLine.font = { bold: true, size: 12 };
+      const fileSubHeader = wsSummary.addRow(['File Name', 'Transactions Count', 'Net Amount']);
+      fileSubHeader.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      });
 
-          const rowData: any = {
-            date: item.date,
-            description: item.description,
-            accountNumber: item.accountNumber || 'N/A',
-            amount: item.amount,
-            debit: blankIfZero(item.debit),
-            credit: blankIfZero(item.credit),
-            sourceFile: item.sourceFile
-          };
+      accountStats.forEach(s => {
+        const row = wsSummary.addRow([s.name, s.count, s.total]);
+        row.getCell(3).numFmt = '#,##0.00';
+      });
+
+      wsSummary.addRow([]);
+      const catHeaderLine = wsSummary.addRow(['CATEGORY CONSOLIDATION']);
+      catHeaderLine.font = { bold: true, size: 12 };
+      const catSubHeader = wsSummary.addRow(['Category Name', 'Line Items', 'Total Value']);
+      catSubHeader.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      });
+
+      stats.forEach(s => {
+        const row = wsSummary.addRow([s.name, s.count, s.total]);
+        row.getCell(3).numFmt = '#,##0.00';
+      });
+
+      wsSummary.addRow([]);
+      const totalRow = wsSummary.addRow(['TOTAL CONSOLIDATED POSITION', '', transactions.reduce((s, t) => s + t.amount, 0)]);
+      totalRow.font = { bold: true };
+      totalRow.getCell(3).numFmt = '#,##0.00';
+
+      wsSummary.getColumn(1).width = 45;
+      wsSummary.getColumn(2).width = 20;
+      wsSummary.getColumn(3).width = 20;
+
+      // 2. Category Tabs
+      CATEGORIES.forEach(category => {
+        const categoryItems = transactions.filter(t => t.category === category);
+        if (categoryItems.length > 0) {
+          // Sheet names must be <= 31 chars and no special chars like / \ ? * [ ]
+          const sheetName = category.replace(/[\\/*?[\]]/g, '').substring(0, 31);
+          const ws = workbook.addWorksheet(sheetName);
+
+          const isSpecialTab = ['Chargebacks', 'Merchant Fees', 'Bank Transfer', 'Miscellaneous'].includes(category);
+
+          const columns = [
+            { header: 'Date', key: 'date', width: 15 },
+            { header: 'Description', key: 'description', width: 50 },
+            { header: 'Account#', key: 'accountNumber', width: 20 },
+            { header: 'Amount', key: 'amount', width: 15 },
+          ];
 
           if (isSpecialTab) {
-            rowData.nsDebit = item.netsuiteDebitAccount || '';
-            rowData.nsCredit = item.netsuiteCreditAccount || '';
-            rowData.swappedDebit = blankIfZero(item.credit);
-            rowData.swappedCredit = blankIfZero(item.debit);
+            columns.push(
+              { header: 'NS Debit Account', key: 'nsDebit', width: 25 },
+              { header: 'Raw Debit', key: 'debit', width: 15 },
+              { header: 'Raw Credit', key: 'credit', width: 15 },
+              { header: 'NS Credit Account', key: 'nsCredit', width: 25 },
+              { header: 'Adj Debit', key: 'adjDebit', width: 15 },
+              { header: 'Adj Credit', key: 'adjCredit', width: 15 },
+              { header: 'Source File', key: 'sourceFile', width: 30 }
+            );
+          } else {
+            columns.push(
+              { header: 'Debit', key: 'debit', width: 15 },
+              { header: 'Credit', key: 'credit', width: 15 },
+              { header: 'Source File', key: 'sourceFile', width: 30 }
+            );
           }
+
+          ws.columns = columns;
+
+          // Style header row
+          const headerRow = ws.getRow(1);
+          headerRow.height = 25;
+          headerRow.eachCell((cell) => {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          });
+
+          categoryItems.forEach(item => {
+            const blankIfZero = (val: number | null) => (val === 0 || val === null) ? null : val;
+
+            const rowData: any = {
+              date: item.date,
+              description: item.description,
+              accountNumber: item.accountNumber || 'N/A',
+              amount: item.amount,
+              debit: blankIfZero(item.debit),
+              credit: blankIfZero(item.credit),
+              sourceFile: item.sourceFile
+            };
+
+            if (isSpecialTab) {
+              rowData.nsDebit = item.netsuiteDebitAccount || '';
+              rowData.nsCredit = item.netsuiteCreditAccount || '';
+              // Logic check: usually adjustment columns carry the reverse or refined intent
+              rowData.adjDebit = blankIfZero(item.credit);
+              rowData.adjCredit = blankIfZero(item.debit);
+            }
 
           const r = ws.addRow(rowData);
-          r.getCell('amount').numFmt = '#,##0.00';
-          r.getCell('debit').numFmt = '#,##0.00';
-          r.getCell('credit').numFmt = '#,##0.00';
-          
+            
+          // Apply number formatting only to cells that exist in the column definition
+          const numericKeys = ['amount', 'debit', 'credit'];
           if (isSpecialTab) {
-            const creditCell = r.getCell('nsCredit');
-            creditCell.font = { color: { argb: 'FFFF0000' }, bold: true };
-            r.getCell('swappedDebit').numFmt = '#,##0.00';
-            r.getCell('swappedCredit').numFmt = '#,##0.00';
+            numericKeys.push('adjDebit', 'adjCredit');
           }
-        });
-      }
-    });
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
-    saveAs(new Blob([buffer]), `Bank_Consolidated_Report_${timestamp}.xlsx`);
+          numericKeys.forEach(key => {
+            try {
+              const cell = r.getCell(key);
+              if (cell) cell.numFmt = '#,##0.00';
+            } catch (e) {
+              // Ignore if column doesn't exist
+            }
+          });
+
+          if (isSpecialTab) {
+            try {
+              const creditCell = r.getCell('nsCredit');
+              if (creditCell) {
+                creditCell.font = { color: { argb: 'FFFF0000' }, bold: true };
+              }
+            } catch (e) {
+              // Ignore
+            }
+          }
+          });
+          
+          ws.views = [{ state: 'frozen', ySplit: 1 }];
+        }
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+      saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `Bank_Statement_Merger_Report_${timestamp}.xlsx`);
+    } catch (error) {
+      console.error('Excel Export Error:', error);
+      alert('Failed to generate Excel report. Please check if your browser allows large downloads.');
+    }
   };
 
   const CATEGORY_STYLE_TEXT: Record<Category, string> = {
