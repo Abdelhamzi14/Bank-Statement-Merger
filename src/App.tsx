@@ -201,6 +201,10 @@ export default function App() {
               <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">
                 Bank <span className="font-medium text-slate-500">Statement Merger</span>
               </h1>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Local Processing Only</span>
+              </div>
             </div>
           </div>
 
@@ -345,13 +349,16 @@ export default function App() {
         )}
       </main>
 
-      <footer className="h-10 bg-slate-800 text-slate-400 px-8 flex items-center justify-between shrink-0">
+      <footer className="h-12 bg-slate-800 text-slate-400 px-8 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-6">
           <span className="text-[9px] uppercase tracking-tighter">&copy; {new Date().getFullYear()} MergerXpress</span>
-          <span className="text-[9px] uppercase tracking-tighter">Environment: Production</span>
+          <div className="flex items-center gap-2 px-2 py-0.5 bg-slate-700/50 rounded border border-slate-700">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[9px] uppercase tracking-tighter text-emerald-400 font-bold">100% Client-Side Private</span>
+          </div>
         </div>
-        <div className="text-[9px] italic">
-          High Performance Bank Statement Merging Engine
+        <div className="text-[9px] italic opacity-60">
+          No data is ever sent to or stored on our servers. Processing occurs entirely in your browser.
         </div>
       </footer>
     </div>

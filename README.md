@@ -1,25 +1,20 @@
 # Bank Statement Merger
 
-This application is built with React, Vite, and Tailwind CSS. It allows you to merge bank statement CSVs, auto-categorize transactions, and export consolidated reports.
+This application is a **100% client-side** tool built with React, Vite, and Tailwind CSS. It allows you to merge bank statement CSVs, auto-categorize transactions, and export consolidated reports without ever sending your sensitive financial data to a server.
 
-## Vercel Deployment
+## Data Privacy & Security
 
-To deploy this application on Vercel:
-
-1. **Push to GitHub**: Push your code to a GitHub repository.
-2. **Import to Vercel**: Connect your GitHub repository to Vercel.
-3. **Configure Environment Variables**:
-   - In the Vercel dashboard, go to your project's **Settings** > **Environment Variables**.
-   - Add a key named `GEMINI_API_KEY` with your Google Gemini API key as the value.
-4. **Deploy**: Vercel will automatically detect the Vite configuration and deploy the app.
+- **100% Local**: All processing, parsing, and categorization happens entirely in your browser.
+- **Zero Server Storage**: No data is uploaded to, stored on, or processed by any remote server.
+- **Temporary State**: Data is held in volatile memory (React State) and is completely wiped upon page refresh or when the "Reset" button is pressed.
+- **Secure by Design**: Designed for privacy-conscious users who need bank reconciliation without third-party exposure.
 
 ## Features
 
-- **CSV Upload**: Support for multiple bank statements with flexible column mapping.
-- **Auto-Categorizing**: Powered by categorized logic to separate bank transfers, fees, and chargebacks.
-- **Bulk Editing**: Multi-select transactions to categorize them in batches.
-- **Journal Entry Review**: Refine NetSuite account numbers before export.
-- **Excel Export**: Download professional reports using `exceljs`.
+- **CSV/Excel Upload**: Local ingestion of bank statements with flexible column mapping.
+- **Auto-Categorizing**: Rule-based logic for Merchant Fees, Chargebacks, and more.
+- **Bulk Editing**: Batch categorize transactions efficiently.
+- **Excel Export**: Generate and download professional reports locally.
 
 ## Tech Stack
 
