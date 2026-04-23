@@ -17,6 +17,15 @@ export default defineConfig(({mode}) => {
     },
     build: {
       chunkSizeWarningLimit: 2000,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-excel': ['exceljs', 'xlsx', 'file-saver'],
+            'vendor-react': ['react', 'react-dom', 'motion'],
+            'vendor-utils': ['papaparse', 'lucide-react', 'react-virtuoso']
+          }
+        }
+      }
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
