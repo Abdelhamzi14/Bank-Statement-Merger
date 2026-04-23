@@ -1,0 +1,6 @@
+{
+  "name": "Bank Statement Merger I",
+  "description": "Upload multiple bank statement CSVs, auto-categorize transactions, and export a consolidated Excel report.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
