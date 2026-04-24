@@ -187,6 +187,10 @@ export default function SummaryAndExport({ files, transactions }: Props) {
 
           if (isSpecialTab) {
             try {
+              const debitCell = r.getCell('nsDebit');
+              if (debitCell) {
+                debitCell.font = { bold: true };
+              }
               const creditCell = r.getCell('nsCredit');
               if (creditCell) {
                 creditCell.font = { color: { argb: 'FFFF0000' }, bold: true };
