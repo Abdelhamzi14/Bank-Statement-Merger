@@ -125,9 +125,14 @@ export default function SummaryAndExport({ files, transactions }: Props) {
               { header: 'Raw Credit', key: 'credit', width: 15 },
               { header: 'NS Credit Account', key: 'nsCredit', width: 25 },
               { header: 'Adj Debit', key: 'adjDebit', width: 15 },
-              { header: 'Adj Credit', key: 'adjCredit', width: 15 },
-              { header: 'Source File', key: 'sourceFile', width: 30 }
+              { header: 'Adj Credit', key: 'adjCredit', width: 15 }
             );
+
+            if (category === 'Merchant Fees') {
+              columns.push({ header: 'Department', key: 'department', width: 15 });
+            }
+
+            columns.push({ header: 'Source File', key: 'sourceFile', width: 30 });
           } else {
             columns.push(
               { header: 'Debit', key: 'debit', width: 15 },
@@ -166,6 +171,10 @@ export default function SummaryAndExport({ files, transactions }: Props) {
               // Logic check: usually adjustment columns carry the reverse or refined intent
               rowData.adjDebit = blankIfZero(item.credit);
               rowData.adjCredit = blankIfZero(item.debit);
+              
+              if (category === 'Merchant Fees') {
+                rowData.department = 'Finance';
+              }
             }
 
           const r = ws.addRow(rowData);
