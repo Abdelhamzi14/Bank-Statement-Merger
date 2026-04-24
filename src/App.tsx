@@ -164,6 +164,10 @@ export default function App() {
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
   };
 
+  const bulkUpdateTransactionRecords = (ids: string[], updates: Partial<BankTransaction>) => {
+    setTransactions(prev => prev.map(t => ids.includes(t.id) ? { ...t, ...updates } : t));
+  };
+
   const handleNext = () => {
     if (step === 1) handleProcessFiles();
     else if (step === 2) setStep(3);
@@ -315,6 +319,7 @@ export default function App() {
                 <JournalEntryStep 
                   transactions={transactions} 
                   onUpdateTransaction={updateTransactionRecord} 
+                  onBulkUpdateTransactions={bulkUpdateTransactionRecords}
                 />
               </motion.div>
             )}

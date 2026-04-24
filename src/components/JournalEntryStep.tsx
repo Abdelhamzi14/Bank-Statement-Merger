@@ -7,13 +7,16 @@ import { cn } from '../lib/utils';
 interface JournalEntryStepProps {
   transactions: BankTransaction[];
   onUpdateTransaction: (id: string, updates: Partial<BankTransaction>) => void;
+  onBulkUpdateTransactions: (ids: string[], updates: Partial<BankTransaction>) => void;
 }
 
 const JOURNAL_CATEGORIES: Category[] = ['Chargebacks', 'Merchant Fees', 'Bank Transfer', 'Miscellaneous'];
 
-export default function JournalEntryStep({ transactions, onUpdateTransaction }: JournalEntryStepProps) {
+export default function JournalEntryStep({ transactions, onUpdateTransaction, onBulkUpdateTransactions }: JournalEntryStepProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Category | 'All'>('All');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDebitValue, setBulkDebitValue] = useState('');
 
   // Filter for categories that need NetSuite mapping review
   const reviewableTransactions = useMemo(() => {
@@ -28,13 +31,63 @@ export default function JournalEntryStep({ transactions, onUpdateTransaction }: 
     });
   }, [transactions, search, filter]);
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === reviewableTransactions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(reviewableTransactions.map(t => t.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const handleBulkApply = () => {
+    if (selectedIds.size === 0 || !bulkDebitValue.trim()) return;
+    onBulkUpdateTransactions(Array.from(selectedIds), { netsuiteDebitAccount: bulkDebitValue });
+    setBulkDebitValue('');
+    setSelectedIds(new Set());
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h3 className="text-xl font-bold text-slate-800">Journal Entry Review</h3>
           <p className="text-sm text-slate-500">Verify NetSuite account mappings for your transactions.</p>
+          
+          {selectedIds.size > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 flex items-center gap-2 p-2 bg-indigo-50 border border-indigo-100 rounded-xl"
+            >
+              <div className="flex items-center gap-2 px-3 py-1.5 border-r border-indigo-200">
+                <span className="text-[10px] font-bold text-indigo-700 uppercase">{selectedIds.size} Selected</span>
+              </div>
+              <div className="flex items-center gap-2 px-2">
+                <input
+                  type="text"
+                  placeholder="Bulk Debit Acc#"
+                  value={bulkDebitValue}
+                  onChange={(e) => setBulkDebitValue(e.target.value)}
+                  className="px-3 py-1.5 rounded-lg border border-indigo-200 bg-white text-xs font-mono w-40 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+                <button
+                  onClick={handleBulkApply}
+                  className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-100"
+                >
+                  Apply to Selected
+                </button>
+              </div>
+            </motion.div>
+          )}
         </div>
+        
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="text"
@@ -58,10 +111,6 @@ export default function JournalEntryStep({ transactions, onUpdateTransaction }: 
               <ChevronDown size={14} />
             </div>
           </div>
-          <div className="px-3 py-1 bg-amber-50 border border-amber-100 rounded-md flex items-center gap-2">
-            <AlertCircle size={14} className="text-amber-500" />
-            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Review Required</span>
-          </div>
         </div>
       </div>
 
@@ -70,6 +119,14 @@ export default function JournalEntryStep({ transactions, onUpdateTransaction }: 
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-6 py-4 w-12">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    checked={reviewableTransactions.length > 0 && selectedIds.size === reviewableTransactions.length}
+                    onChange={toggleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-4 label-micro w-32">Date</th>
                 <th className="px-6 py-4 label-micro flex-1">Description</th>
                 <th className="px-6 py-4 label-micro w-28 text-right">Amount</th>
@@ -81,7 +138,7 @@ export default function JournalEntryStep({ transactions, onUpdateTransaction }: 
             <tbody className="divide-y divide-slate-100">
               {reviewableTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                     <div className="flex flex-col items-center gap-3">
                       <CreditCard size={32} className="opacity-20" />
                       <p className="text-sm font-medium">No transactions requiring manual review found.</p>
@@ -90,7 +147,18 @@ export default function JournalEntryStep({ transactions, onUpdateTransaction }: 
                 </tr>
               ) : (
                 reviewableTransactions.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={t.id} className={cn(
+                    "hover:bg-slate-50/50 transition-colors",
+                    selectedIds.has(t.id) && "bg-indigo-50/30 hover:bg-indigo-50/50"
+                  )}>
+                    <td className="px-6 py-4">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        checked={selectedIds.has(t.id)}
+                        onChange={() => toggleSelectOne(t.id)}
+                      />
+                    </td>
                     <td className="px-6 py-4 text-xs font-medium text-slate-600">{t.date}</td>
                     <td className="px-6 py-4">
                       <div className="text-xs font-bold text-slate-800 line-clamp-1">{t.description}</div>
@@ -120,7 +188,7 @@ export default function JournalEntryStep({ transactions, onUpdateTransaction }: 
                         type="text"
                         value={t.netsuiteDebitAccount || ''}
                         onChange={(e) => onUpdateTransaction(t.id, { netsuiteDebitAccount: e.target.value })}
-                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-md text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold"
                         placeholder="Debit Acc#"
                       />
                     </td>
