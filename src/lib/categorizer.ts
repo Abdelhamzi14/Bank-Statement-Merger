@@ -26,14 +26,18 @@ const SETTLEMENT_DEPOSITS_EXACT = [
   'AMERICAN EXPRESS SETTLEMENT TSTNU',
   'BANKCARD DEPOSIT SETTLEMENT 000998300041244',
   'DEPOSIT    MERCHANT BANKCD 496118245885',
-  'SETTLEMENT AMERICAN EXPRESS 1758778971'
+  'SETTLEMENT AMERICAN EXPRESS 1758778971',
+  'MTOT DEP   BANKCARD',
+  'MTOT DEP BANKCARD',
+  'AMERICAN EXPRESS COLLECTION'
 ];
 
 export function categorizeTransaction(description: string): Category {
   const desc = description.toUpperCase().trim();
+  const normalizedDesc = desc.replace(/\s+/g, ' ');
 
   // 1. Chargebacks
-  if (CHARGEBACK_EXACT.some(pattern => desc === pattern.toUpperCase()) || 
+  if (CHARGEBACK_EXACT.some(pattern => desc === pattern.toUpperCase() || normalizedDesc === pattern.toUpperCase().replace(/\s+/g, ' ')) || 
       desc.includes('CHGBCK') || 
       desc.includes('CHARGEBACK') ||
       desc.includes('CHGBK') ||
@@ -43,16 +47,19 @@ export function categorizeTransaction(description: string): Category {
   }
 
   // 2. Merchant Fees
-  if (MERCHANT_FEES_EXACT.some(pattern => desc === pattern.toUpperCase()) ||
+  if (MERCHANT_FEES_EXACT.some(pattern => desc === pattern.toUpperCase() || normalizedDesc === pattern.toUpperCase().replace(/\s+/g, ' ')) ||
       desc.includes('AXP') ||
       desc.includes('AXP DISCNT')) {
     return 'Merchant Fees';
   }
 
   // 3. Settlement Deposits
-  if (SETTLEMENT_DEPOSITS_EXACT.some(pattern => desc === pattern.toUpperCase()) ||
+  if (SETTLEMENT_DEPOSITS_EXACT.some(pattern => desc === pattern.toUpperCase() || normalizedDesc === pattern.toUpperCase().replace(/\s+/g, ' ')) ||
       desc.includes('SETTLEMENT') ||
-      desc.includes('DEPOSIT')) {
+      desc.includes('DEPOSIT') ||
+      desc.includes('AMERICAN EXPRESS COLLECTION') ||
+      desc.includes('MTOT DEP') ||
+      normalizedDesc.includes('MTOT DEP BANKCARD')) {
     return 'Settlement Deposit';
   }
 
