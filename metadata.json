@@ -2,5 +2,7 @@
   "name": "Bank Statement Merger I",
   "description": "Upload multiple bank statement CSVs, auto-categorize transactions, and export a consolidated Excel report.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

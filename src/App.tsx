@@ -13,6 +13,7 @@ export default function App() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [files, setFiles] = useState<StatementFile[]>([]);
   const [transactions, setTransactions] = useState<BankTransaction[]>([]);
+  const [externalIdStartSequence, setExternalIdStartSequence] = useState<number>(1);
 
   const getNetSuiteDebitAccount = (category: Category) => {
     switch (category) {
@@ -320,6 +321,8 @@ export default function App() {
                   transactions={transactions} 
                   onUpdateTransaction={updateTransactionRecord} 
                   onBulkUpdateTransactions={bulkUpdateTransactionRecords}
+                  externalIdStartSequence={externalIdStartSequence}
+                  onUpdateExternalIdStartSequence={setExternalIdStartSequence}
                 />
               </motion.div>
             )}
@@ -333,7 +336,11 @@ export default function App() {
                 transition={{ duration: 0.3 }}
                 className="elevated-card p-8 min-h-[500px]"
               >
-                <SummaryAndExport files={files} transactions={transactions} />
+                <SummaryAndExport 
+                  files={files} 
+                  transactions={transactions} 
+                  externalIdStartSequence={externalIdStartSequence}
+                />
               </motion.div>
             )}
           </AnimatePresence>

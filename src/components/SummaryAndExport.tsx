@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { type BankTransaction, type Category, type StatementFile } from '../types';
+import { buildExternalIdMap, getExternalId } from '../lib/externalId';
 import { 
   Download, 
   Table, 
@@ -22,6 +23,7 @@ import { cn } from '../lib/utils';
 interface Props {
   files: StatementFile[];
   transactions: BankTransaction[];
+  externalIdStartSequence?: number;
 }
 
 const CATEGORIES: Category[] = [
@@ -70,7 +72,7 @@ const formatCurrency = (val: number) => {
   return val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
-export default function SummaryAndExport({ files, transactions }: Props) {
+export default function SummaryAndExport({ files, transactions, externalIdStartSequence = 1 }: Props) {
   const [activeTab, setActiveTab] = useState<'all' | 'grouped' | 'matrix' | 'separate'>('all');
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
 
@@ -592,19 +594,8 @@ export default function SummaryAndExport({ files, transactions }: Props) {
         return (a.date || '').localeCompare(b.date || '');
       });
 
-      // External ID numbering: similar category sharing the same date (ex: Chargebacks 0001...)
-      const extIdMap = new Map<string, string>();
-      const categoryCounters = new Map<string, number>();
-
-      jeItems.forEach(item => {
-        const key = `${item.category}_${item.date}`;
-        if (!extIdMap.has(key)) {
-          const currentCount = (categoryCounters.get(item.category) || 0) + 1;
-          categoryCounters.set(item.category, currentCount);
-          const padded = String(currentCount).padStart(4, '0');
-          extIdMap.set(key, `${item.category} ${padded}`);
-        }
-      });
+      // External ID numbering: similar category sharing the same date (e.g. Chargebacks 0001...)
+      const extIdMap = buildExternalIdMap(transactions, externalIdStartSequence);
 
       // Helper to format date as MMMM-YYYY (e.g. "January-2024")
       const getMMMMYYYYFromDate = (dateVal: any): string => {
@@ -661,7 +652,7 @@ export default function SummaryAndExport({ files, transactions }: Props) {
       const blankIfZero = (val: number | null) => (val === 0 || val === null) ? null : val;
 
       jeItems.forEach(item => {
-        const extId = extIdMap.get(`${item.category}_${item.date}`) || `${item.category} 0001`;
+        const extId = getExternalId(item, extIdMap, externalIdStartSequence);
         const rawDebit = getDebit(item);
         const rawCredit = getCredit(item);
         const adjDebit = rawCredit;
